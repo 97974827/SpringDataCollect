@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+			
+<mapper namespace="kr.gls.myapp.pos.repository.IPosMapper">
+	
+	<resultMap id="SelfStateVO" type="kr.gls.myapp.device.model.SelfStateVO">
+		<result property="device_addr" column="device_addr"/>
+		<result property="card_num" column="card_num"/>
+		<result property="self_time" column="self_time"/>
+		<result property="under_time" column="under_time"/>
+		<result property="foam_time" column="foam_time"/>
+		<result property="coating_time" column="coating_time"/>
+		<result property="use_cash" column="use_cash"/>
+		<result property="use_card" column="use_card"/>
+		<result property="remain_card" column="remain_card"/>
+		<result property="master_card" column="master_card"/>
+		<result property="start_time" column="start_time"/>
+		<result property="end_time" column="end_time"/>
+	</resultMap>
+	
+	<select id="selectSelfState" resultMap="SelfStateVO">
+		SELECT SUM(use_card) * 100 AS use_card, 
+		SUM(use_cash) *100 As use_cash 
+		FROM gl_self_state 
+		<![CDATA[ 
+			WHERE end_time LIKE CONCAT('%', #{year}, '-', #{month}, '-', #{day}, '%')
+		]]>
+	</select>
+	
+	<!-- 장비이력  -->
+	<select id="selectUseSelfState" resultMap="SelfStateVO">
+		SELECT device_addr, SUM(use_card) * 100 AS use_card, 
+		SUM(use_cash) *100 As use_cash, SUM(master_card) * 100 AS master_card  
+		FROM gl_self_state 
+		WHERE device_addr = #{addr}
+	</select>
+	<select id="selectUseAirState" resultMap="AirStateVO">
+		SELECT device_addr, SUM(air_card) * 100 AS air_card, 
+		SUM(air_cash) *100 As use_cash, SUM(master_card) * 100 AS master_card  
+		FROM gl_air_state 
+		WHERE device_addr = #{addr}
+	</select>
+	<select id="selectUseMateState" resultMap="MateStateVO">
+		SELECT device_addr, SUM(mate_card) * 100 AS mate_card, 
+		SUM(mate_cash) *100 As mate_cash, SUM(master_card) * 100 AS master_card  
+		FROM gl_mate_state 
+		WHERE device_addr = #{addr}
+	</select>
+	<select id="selectUseReaderState" resultMap="ReaderStateVO">
+		SELECT device_addr, SUM(reader_card) * 100 AS reader_card, 
+		SUM(reader_cash) *100 As reader_cash, SUM(master_card) * 100 AS master_card  
+		FROM gl_reader_state 
+		WHERE device_addr = #{addr}
+	</select>
+	<select id="selectUseChargerState" resultMap="TodayChargerStateVO">
+		SELECT `list`.addr AS device_addr, SUM(state.current_charge) * 100 AS charge,
+		SUM(state.exhaust_money) * 100 AS `exhaust_money` 
+		FROM gl_charger_state AS `state`
+		INNER JOIN gl_device_list AS `list`
+		ON `state`.`device_no` = `list`.`no` 
+		WHERE `list`.`type` = #{type} 
+		AND `list`.`addr` = #{addr};
+	</select>
+	
+	<select id="getSelfDetail" resultMap="SelfStateVO">
+		SELECT self_time, under_time, foam_time, coating_time 
+		FROM gl_self_state 
+		WHERE no = #{no}
+	</select>
+	
+	<!--<select id="getGarageDetail" resultMap="SelfStateVO">
+		SELECT self_time, under_time, foam_time, coating_time 
+		FROM gl_garage_state 
+		WHERE no = #{no}
+	</select> -->
+	
+	<resultMap id="AirStateVO" type="kr.gls.myapp.device.model.AirStateVO">
+		<result property="device_addr" column="device_addr"/>
+		<result property="card_num" column="card_num"/>
+		<result property="air_time" column="air_time"/>
+		<result property="air_cash" column="air_cash"/>
+		<result property="air_card" column="air_card"/>
+		<result property="remain_card" column="remain_card"/>
+		<result property="master_card" column="master_card"/>
+		<result property="start_time" column="start_time"/>
+		<result property="end_time" column="end_time"/>
+	</resultMap>
+	<select id="selectAirState" resultMap="AirStateVO">
+		SELECT SUM(air_card) * 100 AS air_card, 
+		SUM(air_cash) *100 As air_cash 
+		FROM gl_air_state 
+		<![CDATA[ 
+			WHERE end_time LIKE CONCAT('%', #{year}, '-', #{month}, '-', #{day}, '%')
+		]]>
+	</select>
+	<resultMap id="MateStateVO" type="kr.gls.myapp.device.model.MateStateVO">
+		<result property="device_addr" column="device_addr"/>
+		<result property="card_num" column="card_num"/>
+		<result property="mate_time" column="mate_time"/>
+		<result property="mate_cash" column="mate_cash"/>
+		<result property="mate_card" column="mate_card"/>
+		<result property="remain_card" column="remain_card"/>
+		<result property="master_card" column="master_card"/>
+		<result property="start_time" column="start_time"/>
+		<result property="end_time" column="end_time"/>
+	</resultMap>
+	<select id="selectMateState" resultMap="MateStateVO">
+		SELECT SUM(mate_card) * 100 AS mate_card, 
+		SUM(mate_cash) *100 As mate_cash 
+		FROM gl_mate_state 
+		<![CDATA[ 
+			WHERE end_time LIKE CONCAT('%', #{year}, '-', #{month}, '-', #{day}, '%')
+		]]>
+	</select>
+	<resultMap id="ReaderStateVO" type="kr.gls.myapp.device.model.ReaderStateVO">
+		<result property="device_addr" column="device_addr"/>
+		<result property="card_num" column="card_num"/>
+		<result property="reader_time" column="reader_time"/>
+		<result property="reader_cash" column="reader_cash"/>
+		<result property="reader_card" column="reader_card"/>
+		<result property="remain_card" column="remain_card"/>
+		<result property="master_card" column="master_card"/>
+		<result property="start_time" column="start_time"/>
+		<result property="end_time" column="end_time"/>
+	</resultMap>
+	<select id="selectReaderState" resultMap="ReaderStateVO">
+		SELECT SUM(reader_card) * 100 AS reader_card, 
+		SUM(reader_cash) *100 As reader_cash 
+		FROM gl_reader_state 
+		<![CDATA[ 
+			WHERE end_time LIKE CONCAT('%', #{year}, '-', #{month}, '-', #{day}, '%')
+		]]>
+	</select>
+	
+	
+	<!-- 매출 뷰 테이블 리스트  -->
+	<resultMap id="SalesListViewVO" type="kr.gls.myapp.pos.model.SalesListViewVO">
+		<result property="device_name" column="device_name" />
+		<result property="device_type" column="device_type" />
+		<result property="device_addr" column="device_addr" />
+		<result property="card_num" column="card_num" />
+		<result property="time" column="time" />
+		<result property="cash" column="cash" />
+		<result property="card" column="card" />
+		<result property="remain_card" column="remain_card" />
+		<result property="master_card" column="master_card" />
+		<result property="start_time" column="start_time" />
+		<result property="end_time" column="end_time" />
+		<result property="current_money" column="current_money" />
+		<result property="credit_money" column="credit_money" />
+	</resultMap>
+	
+	<!-- 마스터 카드 이력 -->
+	<select id="selectMasterCardHistory" resultMap="SalesListViewVO">
+		SELECT device_name, device_addr, master_card, end_time 
+		FROM gl_sales_list
+		WHERE master_card != '0000'
+		AND (device_type = 0 OR device_type = 1 OR device_type = 2
+		OR device_type = 9 OR device_type = 10)
+		ORDER BY end_time DESC 
+	</select>
+	
+	<!-- 포스 : 회원 상세 이력 조회  -->
+	<select id="selectMemberDetail" resultMap="SalesListViewVO">
+		SELECT `device_type`, `end_time`, `cash` * 100 AS 'cash', `card` * 100 AS 'card', 
+       `device_addr`, `device_name`, `remain_card` * 100 AS 'remain_card', 
+       (`cash` * 100) + (`card` * 100) AS 'master_card' 
+       FROM gl_sales_list 
+       WHERE card_num = #{card_num} 
+       ORDER BY `end_time` DESC
+	</select>
+	
+	<!-- 포스 : 최근 사용 카드 검색   -->
+	<select id="selectCardNumGroup" resultType="String">
+		SELECT card_num 
+		FROM gl_sales_list
+		<![CDATA[ 
+			WHERE end_time LIKE CONCAT('%', #{date}, '%')
+		]]>
+		GROUP BY card_num
+	</select>
+	
+	<!--포스 :  카드 잔액 및 최근 사용일자 검색  -->
+	<select id="selectRemainCardAndEndTime" resultMap="SalesListViewVO">
+		SELECT remain_card * 100 AS remain_card, end_time 
+		FROM gl_sales_list 
+		WHERE card_num = #{card_num} 
+		ORDER BY end_time DESC 
+		LIMIT 1
+	</select>
+	
+	<!-- 일간 매출  -->
+	<select id="selectDaySales" resultMap="SalesListViewVO">
+		SELECT `no`, device_name, device_type, device_addr, card_num, `time`,
+		cash * 100 AS cash, card * 100 AS card, credit_money * 100 AS credit_money,
+		current_money * 100 AS current_money, remain_card * 100 AS remain_card, 
+		master_card * 100 AS master_card, UNIX_TIMESTAMP(start_time) AS start_time, 
+		UNIX_TIMESTAMP(end_time) AS end_time
+		FROM gl_sales_list 
+		<![CDATA[ 
+			WHERE end_time LIKE CONCAT('%', #{year}, '-', #{month}, '-', #{days}, '%')
+		]]>
+		ORDER BY end_time asc
+	</select>
+	
+	<!-- 기기별 세차  -->
+	<select id="selectDeviceSales" resultMap="SalesListViewVO">
+		SELECT SUM(cash) * 100 AS cash, SUM(card) * 100 AS card, device_type, device_name 
+		FROM gl_sales_list 
+		<![CDATA[ 
+			WHERE end_time LIKE CONCAT('%', #{year}, '-', #{month}, '-', #{days}, '%')
+		]]> 
+		AND device_type = #{type} AND device_addr = #{addr}
+	</select>
+	
+	<!-- 기기별 충전  -->
+	<select id="selectChargerSales" resultMap="SalesListViewVO">
+		SELECT SUM(cash) * 100 AS cash, SUM(card) * 100 AS card, device_type, device_name,
+		SUM(master_card) * 100 AS master_card, SUM(credit_money) * 100 AS credit_money,
+		SUM(current_money) * 100 AS current_money, 
+		COUNT(case when `time` = '0' THEN 1 END) AS time
+		FROM gl_sales_list 
+		<![CDATA[ 
+			WHERE end_time LIKE CONCAT('%', #{year}, '-', #{month}, '-', #{days}, '%')
+		]]>  
+		AND device_type = #{type} AND device_addr = #{addr}
+	</select>
+	
+	<!-- 장비 세부이력  -->
+	<select id="selectUseDetailDevice" resultMap="SalesListViewVO">
+		SELECT UNIX_TIMESTAMP(start_time) AS start_time, 
+		UNIX_TIMESTAMP(end_time) AS end_time, `time`, 
+		cash*100 AS cash, card*100 AS card, master_card*100 AS master_card,
+		remain_card * 100 AS remain_card, card_num, device_type, `no` 
+		FROM gl_sales_list 
+		WHERE device_type = #{type}  AND device_addr = #{addr} 
+		ORDER BY end_time DESC
+	</select>
+	
+	<select id="selectUseDetailCharger" resultMap="TodayChargerStateVO">
+		SELECT UNIX_TIMESTAMP(input_date) AS input_date, kind, 
+		exhaust_money * 100 AS exhaust_money, current_money * 100 AS money,
+		current_bonus*100 AS bonus, current_credit_money * 100 AS credit_money, 
+		current_charge * 100 AS charge, total_money * 100 AS remain_card, card_num  
+		FROM gl_charger_state AS `state`
+		INNER JOIN gl_device_list AS `list`
+		ON `state`.device_no = `list`.`no` 
+		WHERE `type` = #{type}  AND addr = #{addr} 
+	</select>
+	
+	<!-- 메인 충전장비 모델   -->
+	<resultMap id="TodayChargerStateVO" type="kr.gls.myapp.pos.model.TodayChargerStateVO">
+		<result property="device_no" column="device_no" />
+		<result property="device_name" column="device_name" />
+		<result property="device_addr" column="device_addr" />
+		<result property="card_num" column="card_num" />
+		<result property="exhaust_money" column="exhaust_money" />
+		<result property="kind" column="kind" />
+		<result property="current_money" column="current_money" />
+		<result property="current_bonus" column="current_bonus" />
+		<result property="current_charge" column="current_charge" />
+		<result property="total_money" column="total_money" />
+		<result property="credit_money" column="credit_money" />
+		<result property="input_date" column="input_date" />
+	</resultMap>
+	<select id="selectChargerState" resultMap="TodayChargerStateVO">
+		SELECT SUM(current_charge) * 100 AS charge, 
+		SUM(current_bonus) *100 AS bonus, 
+		SUM(current_credit_money) *100 As credit_money,
+		SUM(current_money) *100 AS money 
+		FROM gl_charger_state 
+		<![CDATA[ 
+			WHERE input_date LIKE CONCAT('%', #{year}, '-', #{month}, '-', #{day}, '%')
+		]]>
+	</select>
+	
+	<!-- 포스 - 카드검색 : 누적충전금액 검색 쿼리 -->
+	<select id="selectTotalCharge" resultType="Integer">
+		SELECT SUM(current_charge) * 100 AS current_charge 
+		FROM gl_charger_state 
+		WHERE card_num = #{card_num}
+	</select>
+	
+	<!-- 포스 - 카드 충전  -->
+	<insert id="insertPosChargerState">
+		INSERT INTO gl_charger_state 
+		(device_no, current_money, current_bonus, current_charge, total_money, card_num, input_date)
+		VALUES (#{charger.device_no}, #{charger.money}, #{charger.bonus}, 
+		#{charger.charge}, #{charger.remain_card}, #{charger.card_num}, #{charger.input_date})
+	</insert>
+	
+	<!-- 포스 - 신용 카드 충전 -->
+	<insert id="insertCreditChargerState">
+		INSERT INTO gl_charger_state 
+		(device_no, current_credit_money, current_bonus, current_charge, total_money, card_num, input_date)
+		VALUES (#{charger.device_no}, #{charger.money}, #{charger.bonus}, 
+		#{charger.charge}, #{charger.remain_card}, #{charger.card_num}, #{charger.input_date})
+	</insert>
+	
+	<select id="selectTodayDeviceSales" resultMap="SalesListViewVO">
+		SELECT device_name, device_addr, card_num, time, 
+		cash*100 AS cash, card*100 AS card, master_card*100 AS master, 
+		remain_card*100 AS remain_card, UNIX_TIMESTAMP(end_time) AS end_time 
+		FROM gl_sales_list
+		<![CDATA[ 
+			WHERE end_time LIKE CONCAT('%', #{date}, '%')			
+		]]>
+		AND (device_type=0 OR device_type=1 OR device_type=2 OR device_type=9 OR device_type=10)
+		ORDER BY end_time DESC
+	</select>
+	
+	<select id="selectTodayChargerSales" resultMap="TodayChargerStateVO">
+		SELECT `info`.device_name AS device_name, `list`.addr AS device_addr, 
+		`charger`.card_num AS card_num, `charger`.current_money * 100 AS money, 
+		`charger`.current_bonus * 100 AS bonus, `charger`.current_charge * 100 AS charge,
+		`charger`.total_money * 100 AS remain_card, 
+		`charger`.current_credit_money * 100 AS credit_money, 
+		UNIX_TIMESTAMP(input_date) AS input_date 
+		FROM gl_charger_state AS `charger` 
+		INNER JOIN gl_device_list AS `list` ON `charger`.device_no = `list`.`no`
+		INNER JOIN gl_device_info AS `info` ON `list`.`type` = info.`type`
+		<![CDATA[ 
+			WHERE charger.input_date LIKE CONCAT('%', #{date}, '%')			
+		]]>  
+		ORDER BY `charger`.input_date DESC
+	</select>
+	
+	<resultMap id="TodaySalesTotalVO" type="kr.gls.myapp.pos.model.TodaySalesTotalVO">
+		<result property="sales" column="sales" />
+		<result property="income" column="income" />
+		<result property="cash" column="cash" />
+		<result property="card" column="card" />
+		<result property="card_charge" column="card_charge" />
+	</resultMap>
+	
+	<select id="selectTodaySales" resultMap="TodaySalesTotalVO">
+		SELECT SUM(`cash`) * 100 AS 'cash_sales', SUM(`card`) * 100 AS 'card_sales' 
+		FROM gl_sales_list 
+		<![CDATA[ 
+			WHERE end_time LIKE CONCAT('%', #{date}, '%')
+		]]>  
+		AND (device_type=0 OR device_type=1 OR device_type=2 OR device_type=9 OR device_type=10)
+	</select>
+	
+	<select id="selectTodayCardCharge" resultMap="TodayChargerStateVO">
+		SELECT SUM(current_money) * 100 AS money, 
+	    SUM(`current_credit_money`) * 100 AS credit_money 
+	    FROM gl_charger_state 
+	    <![CDATA[ 
+			WHERE input_date LIKE CONCAT('%', #{date}, '%')			
+		]]>  
+	</select>
+	
+</mapper>

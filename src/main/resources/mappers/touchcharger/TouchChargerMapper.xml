@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+			
+<mapper namespace="kr.gls.myapp.touch.repository.ITouchChargerMapper">
+
+	<resultMap id="TouchList" type="kr.gls.myapp.touch.model.TouchListVO">
+		<id property="no" column="no" />
+		<result property="type" column="type" />
+	    <result property="addr" column="addr" />
+		<result property="ip" column="ip" />
+	</resultMap>
+	
+	<!-- 터치충전기 장비 갯수 불러오기  -->
+	<select id="getTouchList" resultMap="TouchList">
+		SELECT no, addr, ip 
+		FROM gl_device_list 
+		WHERE type = #{type}
+	</select>
+	
+	
+	<resultMap id="TouchConfigGetVO" type="kr.gls.myapp.touch.model.TouchConfigGetVO">
+		<id property="no" column="device_no" />
+		<result property="type" column="type" />
+		<result property="deviceAddr" column="addr" />
+	    <result property="shopPw" column="shop_pw" />
+		<result property="cardPrice" column="card_price" />
+		<result property="cardMinPrice" column="card_min_price" />
+		<result property="bonus1" column="bonus1" />
+		<result property="bonus2" column="bonus2" />
+		<result property="bonus3" column="bonus3" />
+		<result property="bonus4" column="bonus4" />
+		<result property="bonus5" column="bonus5" />
+		<result property="bonus6" column="bonus6" />
+		<result property="bonus7" column="bonus7" />
+		<result property="bonus8" column="bonus8" />
+		<result property="bonus9" column="bonus9" />
+		<result property="bonus10" column="bonus10" />
+		<result property="defaultBonusNo" column="default_bonus_no" />
+		<result property="autoChargeEnable" column="auto_charge_enable" />
+		<result property="autoChargePrice" column="auto_charge_price" />
+		<result property="rfReaderType" column="rf_reader_type" />
+		<result property="shopNo" column="shop_no" />
+		<result property="name" column="name" />
+		<result property="managerKey" column="manager_key" />
+		<result property="inputDate" column="input_date" />
+	</resultMap>
+		
+	<!-- 데이터 수집장치 - 터치충전기 설정 불러오기  -->
+	<!-- parameterType = 리턴 컬렉션 / resultMap = 매퍼 클래스 -->
+	<select id="getTouchConfigVO" resultMap="TouchConfigGetVO" parameterType="map">
+		SELECT d_list.`no`, d_list.`addr` AS 'device_addr', `shop_pw`, `card_price`, 
+        `card_min_price`, `bonus1`, `bonus2`, `bonus3`, `bonus4`, `bonus5`, 
+        `bonus6`, `bonus7`, `bonus8`, `bonus9`, `bonus10`, `default_bonus_no`, 
+        `auto_charge_enable`, `auto_charge_price`, `rf_reader_type`, 
+        `shop_no`, `name`, `manager_key` 
+        FROM gl_charger_config AS config 
+        INNER JOIN gl_device_list AS d_list 
+        ON config.device_no = d_list.`no` 
+        INNER JOIN gl_charger_bonus AS bonus 
+        ON config.default_bonus_no = bonus.`no` 
+        INNER JOIN gl_shop_info AS shop 
+        ON config.shop_no = shop.`no` 
+        WHERE d_list.type = #{type} AND d_list.addr = #{addr} 
+        ORDER BY config.input_date DESC LIMIT 1
+	</select>
+	
+	<!-- 설정값 insert  -->
+	<insert id="insertChargerConfig">
+		INSERT INTO gl_charger_config(device_no, shop_pw, card_price, 
+		card_min_price, auto_charge_enable, auto_charge_price, shop_no, input_date) 
+		VALUES (#{no}, #{shopPw}, #{cardPrice}, 
+		#{cardMinPrice}, #{autoChargeEnable}, 
+		#{autoChargePrice}, #{shopNo}, #{inputDate})
+	</insert>
+	
+	<!-- 보너스  update -->
+	<update id="updateChargerBonus">
+		UPDATE gl_charger_bonus 
+		SET bonus1 = #{bonus1}, bonus2 = #{bonus2},  
+        bonus3 = #{bonus3}, bonus4 = #{bonus4}, bonus5 = #{bonus5}, bonus6 = #{bonus6}, 
+        bonus7 = #{bonus7}, bonus8 = #{bonus8}, bonus9 = #{bonus9}, bonus10 = #{bonus10}  
+        WHERE no = #{defaultBonusNo}
+	</update>
+	
+	<!-- 보너스  update : 파라미터가 여러개 있을 경우 오브젝트 이름에는 설정한 파라미터 문자열을 앞에 적어주시고
+         다른 변수는 그냥 적기 -->
+	<update id="updateBonus">
+		UPDATE gl_charger_bonus 
+		SET bonus1 = #{obj.bonus1}, bonus2 = #{obj.bonus2},  
+        bonus3 = #{obj.bonus3}, bonus4 = #{obj.bonus4}, bonus5 = #{obj.bonus5}, bonus6 = #{obj.bonus6}, 
+        bonus7 = #{obj.bonus7}, bonus8 = #{obj.bonus8}, bonus9 = #{obj.bonus9}, bonus10 = #{obj.bonus10}
+        WHERE no = #{bonusNo}
+	</update>
+	
+	<!-- 설정값 업데이트  -->
+	<update id="updateChargerConfig">
+		UPDATE gl_charger_config 
+		SET shop_pw = #{obj.shop_pw}, card_price = #{obj.card_price}, card_min_price = #{obj.card_min_price},
+		auto_charge_enable = #{obj.auto_charge_enable}, auto_charge_price = #{obj.auto_charge_price}, 
+		rf_reader_type = #{obj.rf_reader_type}, shop_no = #{obj.shop_no} 
+		WHERE device_no = #{deviceNo}
+	</update>
+	
+	<!-- 충전 기록 insert -->
+	<insert id="insertChargerState">
+		INSERT INTO 
+		gl_charger_state(device_no, kind, exhaust_money, charger_type, sales_type, 
+		current_money, current_bonus, current_charge, total_money, card_num, input_date) 
+		VALUES (#{state.deviceNo}, #{state.kind}, #{state.exhaustMoney}, #{state.chargeType}, 
+		#{state.salesType}, #{state.currentMoney}, #{state.currentBonus}, #{state.currentCharge}, 
+		#{state.totalMoney}, #{state.cardNum}, #{state.inputDate})
+	</insert>
+	
+	<update id="updateTouchShopID">
+		UPDATE config 
+		SET id = #{id}
+	</update>
+	
+	
+</mapper>

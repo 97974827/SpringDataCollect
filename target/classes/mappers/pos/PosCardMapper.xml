@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+			
+<mapper namespace="kr.gls.myapp.pos.repository.IPosMapper">
+	
+	<resultMap id="CardVO" type="kr.gls.myapp.pos.model.CardVO">
+		<result property="card_num" column="card_num"/>
+		<result property="input_date" column="input_date"/>
+		<result property="mb_no" column="mb_no"/>
+	</resultMap>
+	
+	<insert id="setCard">
+		INSERT INTO gl_card (card_num, input_date)
+		VALUES (#{card_num}, #{date})
+	</insert>
+	
+	<!-- 등록 카드 검사  -->
+	<select id="isCard" resultType="Integer">
+		SELECT COUNT(*) AS 'check' 
+		FROM gl_card 
+		WHERE `card_num` = #{cardNum}
+	</select>
+	
+	<!-- 정지카드 검사  -->
+	<select id="isBlackCard" resultType="Integer">	
+		SELECT COUNT(*) AS check 
+		FROM gl_card_blacklist 
+		WHERE card_num = #{cardNum}
+	</select>
+	
+	<select id="selectCardName" resultType="String">
+		SELECT mb.`name` AS `name` 
+		FROM gl_member_card AS mb_card
+		INNER JOIN gl_member AS mb 
+		ON mb_card.mb_no = mb.`no` 
+		WHERE mb_card.num = #{card_num}
+	</select>
+	
+	<select id="selectCardNum" resultType="String">
+		SELECT card_num 
+		FROM gl_card 
+		WHERE card_num = #{card_num}
+	</select>
+	
+	<select id="countVerification" resultType="Integer">
+		SELECT COUNT(*) AS verification 
+		FROM gl_card_blacklist 
+		WHERE card_num = #{card_num}
+	</select>
+	
+	<select id="selectLastDate" resultType="String">
+		SELECT end_time 
+		FROM gl_sales_list 
+		WHERE card_num = #{card_num}
+		ORDER BY end_time DESC 
+		LIMIT 1
+	</select>
+	
+	<resultMap id="MemberCardVO" type="kr.gls.myapp.pos.model.MemberCardVO">
+		<id property="num" column="num"/>
+		<result property="mb_no" column="mb_no"/>
+		<result property="input_date" column="input_date"/>
+	</resultMap>
+	
+	<select id="getCardHistory" resultMap="CardVO">
+		SELECT card_num, UNIX_TIMESTAMP(input_date) AS input_date, 
+		IFNULL
+		((select `mb_no` FROM gl_member_card 
+		WHERE `num` = card.card_num 
+		ORDER BY `input_date` DESC LIMIT 1), 0) AS 'mb_no'
+		FROM gl_card AS `card`
+		WHERE NOT card_num IN('00000000') 
+		ORDER BY input_date DESC 
+	</select>
+	
+	<select id="selectCardHistoryDeTail" resultMap="SalesListViewVO">
+		SELECT device_type, end_time, cash*100 AS cash, card*100 AS card,
+		device_addr, device_name, remain_card*100 AS remain_card, 
+		(cash*100) + (card*100) AS master_card, `no` 
+		FROM gl_sales_list 
+		WHERE card_num = #{card_num} 
+		ORDER BY end_time DESC 
+	</select>
+	
+	<resultMap id="BlackCardVO" type="kr.gls.myapp.pos.model.BlackCardVO">
+		<id property="no" column="no"/>
+		<result property="card_num" column="card_num"/>
+		<result property="content" column="content"/>
+		<result property="input_date" column="input_date"/>
+	</resultMap>
+	
+	<select id="selectBlackCard" resultMap="BlackCardVO">
+		SELECT no, card_num, content, 
+		DATE_FORMAT(input_date, "%Y-%m-%d") AS input_date 
+		FROM gl_card_blacklist
+	</select>
+	
+	<insert id="insertBlackCard">
+		INSERT INTO gl_card_blacklist(card_num, content, input_date) 
+		VALUES (#{card_num}, #{content}, #{date})
+	</insert>
+	
+	<delete id="deleteBlackCard">
+		DELETE 
+		FROM gl_card_blacklist 
+		WHERE `no` = #{no}
+	</delete>
+	
+	<!-- 회원 코드 검색  -->
+	<select id="selectMemberNo" resultType="String">
+		SELECT mb_no 
+		FROM gl_member_card 
+		WHERE num = #{num}
+	</select>
+	
+	<select id="selectCardDate" resultType="String">
+		SELECT input_date 
+		FROM gl_card 
+		WHERE card_num = #{card_num}
+	</select>
+	
+	<select id="selectCardNumAndEndTime" resultMap="MemberCardVO">
+		SELECT mb_card.num AS num, card.input_date AS input_date 
+		FROM gl_member_card AS mb_card 
+		INNER JOIN gl_card AS card 
+		ON mb_card.num = card.card_num 
+		WHERE mb_card.mb_no = #{mb_no}
+	</select>
+	
+	<delete id="deleteSelfState">
+		DELETE 
+		FROM gl_self_state 
+		WHERE card_num = #{card_num}
+	</delete>
+	
+	<delete id="deleteAirState">
+		DELETE 
+		FROM gl_air_state 
+		WHERE card_num = #{card_num}
+	</delete>
+	
+	<delete id="deleteMateState">
+		DELETE 
+		FROM gl_mate_state 
+		WHERE card_num = #{card_num}
+	</delete>
+	
+	<delete id="deleteReaderState">
+		DELETE 
+		FROM gl_reader_state 
+		WHERE card_num = #{card_num}
+	</delete>
+	
+	<delete id="deleteChargerState">
+		DELETE 
+		FROM gl_charger_state 
+		WHERE card_num = #{card_num}
+	</delete>
+	
+	<delete id="deleteNotCardSelfState">
+		DELETE 
+		FROM gl_self_state 
+		WHERE card_num NOT IN ('000000000')
+	</delete>
+	
+	<delete id="deleteNotCardAirState">
+		DELETE 
+		FROM gl_air_state 
+		WHERE card_num NOT IN ('000000000')
+	</delete>
+	
+	<delete id="deleteNotCardMateState">
+		DELETE 
+		FROM gl_mate_state 
+		WHERE card_num NOT IN ('000000000')
+	</delete>
+	
+	<delete id="deleteNotCardReaderState">
+		DELETE 
+		FROM gl_reader_state 
+		WHERE card_num NOT IN ('000000000')
+	</delete>
+	
+	<delete id="deleteNotCardChargerState">
+		DELETE 
+		FROM gl_charger_state 
+		WHERE card_num NOT IN ('000000000')
+	</delete>
+	
+	<delete id="deleteSelf">
+		DELETE 
+		FROM gl_self_state 
+	</delete>
+	
+	<delete id="deleteAir">
+		DELETE 
+		FROM gl_air_state 
+	</delete>
+	
+	<delete id="deleteMate">
+		DELETE 
+		FROM gl_mate_state 
+	</delete>
+	
+	<delete id="deleteReader">
+		DELETE 
+		FROM gl_reader_state 
+	</delete>
+	
+	<delete id="deleteCharger">
+		DELETE 
+		FROM gl_charger_state 
+	</delete>
+	
+</mapper>

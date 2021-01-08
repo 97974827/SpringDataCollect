@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<!-- 히카리 커넥션을 빈 등록 : name 속성값은 정해져 있음 -->
+	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+		<property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
+		<property name="jdbcUrl" value="jdbc:mysql://localhost:3306/data_collect?serverTimezone=Asia/Seoul" />
+		<property name="username" value="pi" />
+		<property name="password" value="gls08300" />
+	</bean>
+	
+	<!-- <bean id="hikariConfig2" class="com.zaxxer.hikari.HikariConfig">
+		<property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
+		<property name="jdbcUrl" value="jdbc:mysql://192.168.0.224:3306/glstech?serverTimezone=Asia/Seoul" />
+		<property name="username" value="pi" />
+		<property name="password" value="1234" />
+	</bean> -->
+	
+	<!-- 데이터 소스 객체(커넥션 풀 사용하기위한 객체) 빈 등록 : 히카리 커넥션객체 참조  -->
+	<bean id="ds" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+		<constructor-arg ref="hikariConfig"/>	
+	</bean>
+	<!-- <bean id="ds2" class="com.zaxxer.hikari.HikariDataSource">
+		<constructor-arg ref="hikariConfig2"/>	
+	</bean> -->
+	
+	<!-- 마이바티스 객체 빈 등록 : 데이터소스객체 참조, 매퍼인터페이스 구현클래스 주입 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="ds" />
+		<property name="mapperLocations" value="classpath:/mappers/**/*Mapper.xml" />
+	</bean>
+	<!-- <bean id="sqlSessionFactory2" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="ds2" />
+		<property name="mapperLocations" value="classpath:/mappers/**/*Mapper.xml" />
+	</bean> -->
+	
+	
+	<!-- 템플릿과 마이바티스 중 하나만 결정해서 등록함 -->
+	<!-- JDBC 템플릿 클래스 빈 등록 -->
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="ds" />
+	</bean>
+	
+	<!-- mapper의 인터페이스를 스캔하는 설정 : namespaces에서 mybatis-spring 체크 후 작성 -->
+	<!-- 매퍼 클래스 경로 꼭 추가해야함  -->
+	<mybatis-spring:scan base-package="kr.gls.myapp.touch.repository"/>
+	<mybatis-spring:scan base-package="kr.gls.myapp.pos.repository"/>
+	<mybatis-spring:scan base-package="kr.gls.myapp.device.repository"/>
+	
+</beans>

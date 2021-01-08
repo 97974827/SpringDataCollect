@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+			
+<mapper namespace="kr.gls.myapp.pos.repository.IPosMapper">
+
+	<resultMap id="MemberVO" type="kr.gls.myapp.pos.model.MemberVO">
+		<id property="mb_no" column="no"/>
+		<id property="mobile" column="mobile"/>
+		<result property="name" column="name"/>
+		<result property="car_num" column="car_num"/>
+		<result property="card_num" column="card_num"/>
+		<result property="group" column="group"/>
+		<result property="birth" column="birth"/>
+		<result property="addr" column="addr"/>
+		<result property="vip_set" column="vip_set"/>
+		<result property="input_date" column="input_date"/>
+		<result property="level" column="level"/>
+		<result property="level_name" column="level_name"/>
+	</resultMap>
+
+	<select id="selectMemberList" resultMap="MemberVO">
+		SELECT mb.`no` AS no, 
+		mb.`name` AS name,
+		 mb.mobile AS mobile, 
+		mb.car_num AS car_num, 
+		mb.input_date AS input_date, 
+		card.`num` AS card_num 
+		FROM gl_member AS mb 
+		INNER JOIN gl_member_card AS card 
+		ON mb.`no` = card.`mb_no`
+	</select>
+	
+	<select id="selectMemberLevel" resultMap="MemberVO">
+		SELECT `level`, `level_name` 
+		FROM gl_member_level
+	</select>
+	
+	<!-- 다중 카드 사용자 갯수 추출 -->
+	<select id="countCardMember" resultType="Integer">
+		SELECT COUNT(*) AS `count` 
+		FROM gl_member AS mb 
+		INNER JOIN gl_member_card AS mb_card 
+		ON mb.`no` = mb_card.mb_no 
+		WHERE mb_no = #{mb_no}
+	</select>
+	
+	<select id="selectMemberInfo" resultMap="MemberVO">
+		SELECT `no` AS 'no', mb.`level` AS 'level', 
+		`name`, `birth`, `mobile`, `car_num`, `addr`,  
+		`group`, `input_date`, `vip_set`, mb_level.`level_name` AS level_name 
+		FROM gl_member AS mb 
+		INNER JOIN gl_member_level AS mb_level 
+		ON mb.`level` = mb_level.`level` 
+		WHERE `no` = #{mb_no}
+	</select>
+	
+	<select id="selectMemberCard" resultType="String">
+		SELECT num AS card_num 
+		FROM gl_member as mb 
+		INNER JOIN gl_member_card AS card 
+		ON mb.no = card.mb_no 
+		WHERE mb_no = #{mb_no}
+	</select>
+	
+	<select id="selectOneCardUser" resultMap="MemberVO">
+		SELECT `no` AS 'no', mb.`level` AS level, 
+		`name`, `birth`, `mobile`, `car_num`, `addr`, 
+        `group`, mb.`input_date` AS 'input_date', `num` AS 'card_num', `vip_set`, mb_level.`level_name` 
+        FROM gl_member AS mb 
+        INNER JOIN gl_member_card AS card 
+        ON mb.`no` = card.`mb_no` 
+        INNER JOIN gl_member_level AS mb_level 
+        ON mb.`level` = mb_level.`level` 
+        WHERE mb_no = #{mb_no}
+	</select>
+	
+	<!-- 회원 등록  -->
+	<insert id="insertMember">
+		INSERT INTO gl_member(`level`, `group`, `name`, `birth`, `mobile`, `addr`, 
+        `car_num`, `input_date`, `vip_set`) 
+        VALUES (#{mb.level}, #{mb.group}, #{mb.name}, #{mb.birth}, #{mb.mobile}, #{mb.addr}, 
+		#{mb.car_num}, #{mb.input_date}, #{mb.vip_set})
+	</insert>
+	
+	<select id="selectMbNo" resultType="String">
+		SELECT `no` 
+		FROM gl_member 
+		WHERE `level` = #{mb.level} 
+		AND `group` = #{mb.group} AND `name` =#{mb.name}
+	    AND `birth` = #{mb.birth} AND `mobile` = #{mb.mobile} 
+	    AND `addr` = #{mb.addr} AND `car_num` = #{mb.car_num}
+	</select>
+	
+	<insert id="insertMemberCard">
+		INSERT INTO gl_member_card (num, mb_no, input_date)
+		VALUES (#{card.num}, #{card.mb_no}, #{card.input_date}) 
+	</insert>
+	
+	<update id="updateMember">
+		UPDATE gl_member 
+		SET `level` = #{mb.level}, `group` = #{mb.group}, `name` = #{mb.name}, `birth` = #{mb.birth}, 
+     	`mobile` = #{mb.mobile}, `addr` = #{mb.addr}, `car_num` = #{mb.car_num}, 
+     	`input_date` = #{mb.input_date}, `vip_set` = #{mb.vip_set} 
+    	WHERE `no` = #{mb_no}
+	</update>
+	
+	<delete id="deleteCard">
+		DELETE FROM gl_member_card 
+		WHERE mb_no = #{mb_no}
+	</delete>
+	
+	<select id="countCard" resultType="Integer">
+		SELECT COUNT(*) AS count 
+		FROM gl_member_card 
+		WHERE mb_no = #{mb_no}
+	</select>
+	
+	<update id="updateMemberCard">
+		UPDATE gl_member_card 
+		SET num = #{card.num}, input_date = #{card.input_date} 
+		WHERE mb_no = #{mb_no}
+	</update>
+	
+	<select id="selectMemberCardNum" resultType="String">	
+		SELECT num 
+		FROM gl_member_card 
+		WHERE mb_no = #{mb_no}
+	</select>
+	
+	<delete id="deleteMemberCard">
+		DELETE FROM gl_member_card 
+		WHERE num = #{num}
+	</delete>
+	
+	<delete id="deleteMember">
+		DELETE FROM gl_member  
+		WHERE no = #{mb_no}
+	</delete>
+	
+	<select id="selectMemberTotalCharge" resultType="Integer">
+		SELECT SUM(current_charge) * 100 AS total_charge 
+		FROM gl_charger_state 
+		WHERE card_num = #{card_num}
+	</select>
+	
+	<!-- 이름으로 검색  -->
+	<select id="selectToName" resultMap="MemberVO">
+		SELECT `mb`.`no` AS 'no', `mb`.`name`, `mb`.`mobile`, 
+		`mb`.`car_num`, `mb`.`input_date`, `card`.`num` AS `card_num` 
+        FROM gl_member  AS `mb` 
+        INNER JOIN gl_member_card AS `card` 
+        ON `mb`.`no` = `card`.`mb_no` 
+        WHERE `mb`.`name` = #{name}
+	</select>
+	
+	<select id="selectToMobile" resultMap="MemberVO">
+		SELECT `mb`.`no` AS 'no', `mb`.`name`, `mb`.`mobile`, 
+		`mb`.`car_num`, `mb`.`input_date`, `card`.`num` AS `card_num` 
+	    FROM gl_member  AS `mb` 
+	    INNER JOIN gl_member_card AS `card` 
+	    ON `mb`.`no` = `card`.`mb_no` 
+	    WHERE `mb`.`mobile` = #{mobile}
+    </select>
+	
+	<select id="selectToCar" resultMap="MemberVO">
+		SELECT `mb`.`no` AS 'no', `mb`.`name`, `mb`.`mobile`, 
+		`mb`.`car_num`, `mb`.`input_date`, `card`.`num` AS `card_num` 
+	    FROM gl_member  AS `mb` 
+	    INNER JOIN gl_member_card AS `card` 
+	    ON `mb`.`no` = `card`.`mb_no` 
+	    WHERE `mb`.`car_num` = #{car}
+    </select>
+    
+    <select id="selectToCard" resultMap="MemberVO">
+		SELECT `mb`.`no` AS 'no', `mb`.`name`, `mb`.`mobile`, 
+		`mb`.`car_num` AS car_num , `mb`.`input_date`, `card`.`num` AS `card_num` 
+	    FROM gl_member  AS `mb` 
+	    INNER JOIN gl_member_card AS `card` 
+	    ON `mb`.`no` = `card`.`mb_no` 
+	    WHERE `card`.`num` = #{card}
+    </select>
+    
+    <resultMap id="MemberBonusVO" type="kr.gls.myapp.pos.model.MemberBonusVO" >
+    	<result property="bonus1" column="bonus1"/>
+    	<result property="bonus2" column="bonus2"/>
+    	<result property="bonus3" column="bonus3"/>
+    	<result property="bonus4" column="bonus4"/>
+    	<result property="bonus5" column="bonus5"/>
+    	<result property="bonus6" column="bonus6"/>
+    	<result property="bonus7" column="bonus7"/>
+    	<result property="bonus8" column="bonus8"/>
+    	<result property="bonus9" column="bonus9"/>
+    	<result property="bonus10" column="bonus10"/>
+    	<result property="period" column="period"/>
+    </resultMap>
+    
+    <select id="selectMemberBonus" resultMap="MemberBonusVO">
+    	SELECT `level`.`level`, `level`.`level_name`,
+		v_con.`charge_money` AS 'money',
+		v_con.`charge_period` / 30 AS 'period',
+		bonus.`bonus1` * 100 AS 'bonus1', bonus.`bonus2` * 100 AS 'bonus2',
+		bonus.`bonus3` * 100 AS 'bonus3', bonus.`bonus4` * 100 AS 'bonus4',
+		bonus.`bonus5` * 100 AS 'bonus5', bonus.`bonus6` * 100 AS 'bonus6',
+		bonus.`bonus7` * 100 AS 'bonus7', bonus.`bonus8` * 100 AS 'bonus8',
+		bonus.`bonus9` * 100 AS 'bonus9', bonus.`bonus10` * 100 AS 'bonus10'  
+		FROM gl_charger_bonus AS bonus 
+		INNER JOIN gl_member_level AS `level` 
+		ON bonus.mb_level = `level`.`level` 
+		INNER JOIN gl_vip_config AS v_con 
+		ON v_con.`level` = `level`.`level`
+    </select>
+    
+    
+    
+</mapper>

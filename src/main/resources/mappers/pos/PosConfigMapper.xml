@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+			
+<mapper namespace="kr.gls.myapp.pos.repository.IPosMapper">
+	
+	<!-- 히든 설정 불러오기 : 추후 deviceMapper로 옮기기  -->
+	<resultMap id="SelfConfigVO" type="kr.gls.myapp.device.model.SelfConfigVO">	
+		<result property="speedier_enable" column="speedier_enable"/>
+		<result property="use_type" column="use_type"/>
+		<result property="set_coating_output" column="set_coating_output"/>
+		<result property="wipping_enable" column="wipping_enable"/>
+		<result property="wipping_temperature" column="wipping_temperature"/>
+	</resultMap>
+	
+	<select id="getHiddenConfig" resultMap="SelfConfigVO">	
+		SELECT 
+		speedier_enable,
+		use_type, 
+		set_coating_output, 
+		wipping_enable, 
+		wipping_temperature 
+		FROM gl_self_config 
+		WHERE gl_self_config.device_addr = #{device_addr}
+		ORDER BY input_date DESC 
+		LIMIT 1
+	</select>
+	
+	<resultMap id="ManagerListVO" type="kr.gls.myapp.pos.model.ManagerListVO">
+		<id property="no" column="no"/>
+		<result property="manager_name" column="manager_name"/>
+		<result property="manager_id" column="manager_id"/>
+		<result property="encrypt" column="encrypt"/>
+	</resultMap>
+	
+	<select id="getManagerInfo" resultMap="ManagerListVO">
+		SELECT manager.no AS manager_no, manager.name AS manager_name, 
+		manager.manager_id AS manager_id, manager.encrypt AS manager_encrypt 
+		FROM gl_pos_config AS pos 
+		INNER JOIN gl_manager AS manager 
+		ON pos.manager_no = manager.no
+	</select>
+	
+	<resultMap id="CrcVO" type="kr.gls.myapp.pos.model.CrcVO">
+		<id property="no" column="no" />
+		<result property="crc" column="crc" />
+	</resultMap>
+	
+	<select id="getCrcTable" resultMap="CrcVO">
+		SELECT * FROM gl_crc
+	</select>
+	
+	<resultMap id="DeviceInfoVO" type="kr.gls.myapp.pos.model.DeviceInfoVO">
+		<id property="no" column="no" />
+		<result property="type" column="type" />
+		<result property="device_name" column="device_name" />
+	</resultMap>
+	
+	<select id="selectDeviceInfo" resultMap="DeviceInfoVO">
+		SELECT DISTINCT info.device_name AS device_name, list.type AS type 
+		FROM gl_device_list as list 
+		INNER JOIN gl_device_info AS info 
+		ON list.type = info.type 
+	</select>
+	
+	<!-- 공급업체 리스트 가져오기 -->
+	<select id="getManagerList" resultMap="ManagerListVO">
+		SELECT no AS manager_no, 
+		name AS manager_name, 
+		manager_id AS manager_id, 
+		encrypt AS manager_encrypt
+		FROM gl_manager
+	</select>
+	
+	<!-- 마스터 설정 불러오기 VO -->
+	<resultMap id="MasterConfigGetVO" type="kr.gls.myapp.pos.model.MasterConfigGetVO">
+		<result property="auth_code" column="auth_code"/>
+		<result property="manager_name" column="name"/>
+		<result property="enable_card" column="enable_card"/>
+		<result property="card_binary" column="card_binary"/>
+	</resultMap>
+	
+	<resultMap id="MasterConfigSetVO" type="kr.gls.myapp.pos.model.MasterConfigSetVO">
+		<result property="manager_no" column="manager_no"/>
+		<result property="enable_card" column="enable_card"/>
+		<result property="card_binary" column="auth_code"/>
+	</resultMap>
+	
+	<select id="selectAuth" resultType="String">
+		SELECT auth_code 
+		FROM gl_shop_info
+	</select>
+	
+	<select id="selectShopNo" resultType="String">
+		SELECT no 
+		FROM gl_shop_info
+	</select>
+	
+	<!-- 마스터 설정 불러오기 -->
+	<select id="selectMasterConfig" resultMap="MasterConfigGetVO">	
+		SELECT info.auth_code, manager.name, pos.enable_card, pos.auth_code AS card_binary
+		FROM gl_pos_config AS pos 
+		INNER JOIN gl_manager AS manager 
+		ON manager.no = pos.manager_no 
+		INNER JOIN gl_shop_info AS info 
+		ON pos.shop_no = info.no
+	</select>
+	
+	<!-- 마스터 설정  -->
+	<update id="updateMasterShopInfo">
+		UPDATE gl_shop_info SET auth_code = #{auth_code}
+	</update>
+	
+	<update id="updateMasterPosConfig">
+		UPDATE gl_pos_config 
+		SET manager_no = #{manager_no}, 
+		enable_card = #{enableCard}, 
+		auth_code = #{cardBinary}
+	</update>
+	
+	<resultMap type="kr.gls.myapp.pos.model.PosConfigVO" id="PosConfigVO">
+		<id property="shop_no" column="shop_no"/>
+		<result property="shop_id" column="shop_id"/>
+		<result property="shop_pw" column="shop_pw"/>
+		<result property="shop_name" column="name"/>
+		<result property="shop_tel" column="tel"/>
+		<result property="encry" column="sales_list_encryption"/>
+		<result property="list_enable" column="sales_list_enable"/>
+		<result property="weather_area" column="weather_area"/>
+		<result property="weather_url" column="weather_url"/>
+		<result property="master_card_num" column="master_card_num"/>
+		<result property="manager_no" column="manager_no"/>
+		<result property="addr" column="addr"/>
+		<result property="ceo" column="ceo"/>
+		<result property="business_number" column="business_number"/>
+		<result property="admin_pw" column="admin_pw"/>
+		<result property="set_vip" column="set_vip"/>
+		<result property="dc_version" column="dc_version"/>
+		<result property="card_binary" column="auth_code"/>
+	</resultMap>
+	
+	<!-- 장비 갯수추출  -->
+	<select id="selectDeviceCount" resultType="Integer">
+		SELECT COUNT(*) 
+		FROM gl_device_list 
+		WHERE type = #{type}
+	</select>
+	
+	<!-- 포스 설정 불러오기 -->
+	<select id="selectShopInfo" resultMap="PosConfigVO">
+		SELECT 
+		shop_id, shop_no, shop_pw, shop_no, name, tel, 
+		sales_list_encryption, sales_list_enable, 
+		weather_area, weather_url, master_card_num, 
+		manager_no, addr, ceo, business_number, admin_pw, 
+		set_vip, dc_version, gl_pos_config.auth_code 
+		FROM gl_pos_config 
+		INNER JOIN gl_shop_info 
+		ON gl_pos_config.shop_no = gl_shop_info.no
+	</select>
+	
+	<!-- 포스 테이블 업데이트  -->
+	<update id="updatePosConfig">
+		UPDATE gl_pos_config 
+		SET shop_id = #{pos.shop_id}, shop_pw = #{pos.shop_pw}, sales_list_enable = #{pos.list_enable},
+		sales_list_encryption = #{pos.encry}, weather_area = #{pos.weather_area}, weather_url = #{pos.weather_url},
+		master_card_num = #{pos.master_card_num}, manager_no = #{pos.manager_no}, set_vip = #{pos.set_vip}
+	</update>
+	
+	<!-- 상점 정보 업데이트  -->
+	<update id="updateShopInfo">
+		UPDATE gl_shop_info 
+		SET no = #{shop.shop_no}, name = #{shop.shop_name}, tel = #{shop.shop_tel}, addr = #{shop.addr}, 
+		ceo = #{shop.ceo}, business_number = #{shop.business_number}
+	</update>
+	
+	<!-- 장비 가장 큰 주소 조회 -->
+	<select id="selectMaxAddr" resultType="String">
+		SELECT MAX(#{addr}) 
+		FROM gl_device_list
+		WHERE type = #{type}
+	</select>
+	
+	<!-- device_no 검색 -->
+	<select id="selectDeviceNo" resultType="Integer">
+		SELECT no 
+		FROM gl_device_list 
+		WHERE addr = #{addr} AND type = #{type}
+	</select>
+	
+	<!-- 장비 추가  -->
+	<insert id="addDeviceList">
+		INSERT INTO gl_device_list(type, addr, ip) 
+		VALUES (#{type}, #{addr}, #{ip})
+	</insert>
+	
+	<!-- 장비 삭제  -->
+	<delete id="removeDeviceList">
+		DELETE FROM gl_device_list 
+		WHERE addr = #{addr} AND type = #{type}
+	</delete>
+	
+	<!-- 장비 추가  -->
+	<insert id="addWashTotal">
+		INSERT INTO gl_wash_total(addr, type) 
+		VALUES (#{addr}, #{type})
+	</insert>
+	
+	<!-- 장비 삭제  -->
+	<delete id="removeWashTotal">
+		DELETE FROM gl_wash_total 
+		WHERE addr = #{addr} AND type = #{type}
+	</delete>
+	
+	<resultMap id="DeviceList" type="kr.gls.myapp.common.DeviceListVO">
+		<id property="no" column="no" />
+		<result property="type" column="type" />
+	    <result property="addr" column="addr" />
+		<result property="ip" column="ip" />
+	</resultMap>
+	
+	<!--장비 갯수 불러오기  -->
+	<select id="selectDeviceList" resultMap="DeviceList">
+		SELECT *
+		FROM gl_device_list 
+		WHERE type = #{type}
+	</select>
+	
+	<!-- <insert id="insertSelfConfig">
+		INSERT INTO gl_self_config(device_addr) 
+		VALUES (#{addr})
+	</insert> -->
+	
+	
+	
+	
+</mapper>

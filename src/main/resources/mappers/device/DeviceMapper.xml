@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+			
+<mapper namespace="kr.gls.myapp.device.repository.IDeviceMapper">
+	
+	<select id="selectNo" resultType="Integer">
+		SELECT no 
+		FROM gl_device_list 
+		WHERE type = #{type} AND addr = #{addr}
+	</select>
+	
+	<resultMap id="DeviceListVO" type="kr.gls.myapp.common.DeviceListVO">
+		<id property="no" column="no" />
+		<result property="type" column="type" />
+	    <result property="addr" column="addr" />
+		<result property="ip" column="ip" />
+	</resultMap>
+
+	<!-- 충전기 설정 - 상점ID 업데이트  -->
+	<update id="updateChargerConfigShopID">	
+		UPDATE gl_charger_config 
+		SET shop_no = #{shopid} 
+		WHERE device_no = #{no}
+	</update>
+	
+	<update id="updateDeviceListAddr">
+		UPDATE gl_device_list 
+		SET addr = #{newAddr} 
+		WHERE type = #{type} AND addr = #{oldAddr}
+	</update>
+	
+	<select id="selectDeviceInfoList" resultMap="DeviceListVO">
+		SELECT type, addr, ip 
+		FROM gl_device_list 
+		WHERE type=#{gls.touch} OR type=#{gls.kiosk}
+	</select>
+	
+	<select id="selectDeviceAddr" resultType="String">
+		SELECT addr 
+		FROM gl_device_list 
+		WHERE type = #{type}
+	</select>
+	
+	<insert id="insertSelfState">
+		INSERT INTO gl_self_state (device_addr, card_num, self_time, under_time, foam_time, 
+		coating_time, use_cash, use_card, remain_card, master_card, start_time, end_time) 
+		VALUES (#{self.device_addr}, #{self.card_num}, #{self.self_time}, #{self.under_time}, #{self.foam_time}
+		, #{self.coating_time}, #{self.use_cash}, #{self.use_card}, #{self.remain_card}, #{self.master_card},
+		#{self.start_time}, #{self.end_time})
+	</insert>
+	
+	<insert id="insertAirState">
+		INSERT INTO gl_air_state 
+		(device_addr, card_num, air_cash, air_card, remain_card, master_card, start_time, end_time) 
+		VALUES (#{air.device_addr}, #{air.card_num}, #{air.air_cash}, #{air.air_card}, #{air.remain_card},
+		#{air.master_card}, #{air.start_time}, #{air.end_time})
+	</insert>
+	
+	<insert id="insertMateState">
+		INSERT INTO gl_mate_state 
+		(device_addr, card_num, mate_cash, mate_card, remain_card, master_card, start_time, end_time) 
+		VALUES (#{mate.device_addr}, #{mate.card_num}, #{mate.mate_cash}, #{mate.mate_card}, #{mate.remain_card},
+		#{mate.master_card}, #{mate.start_time}, #{mate.end_time})
+	</insert>
+	
+	<insert id="insertReaderState">
+		INSERT INTO gl_reader_state 
+		(device_addr, card_num, reader_cash, reader_card, remain_card, master_card, start_time, end_time) 
+		VALUES (#{reader.device_addr}, #{reader.card_num}, #{reader.reader_cash}, #{reader.reader_card}, #{reader.remain_card},
+		#{reader.master_card}, #{reader.start_time}, #{reader.end_time})
+	</insert>
+	
+	<insert id="insertChargerState">
+		INSERT INTO gl_charger_state 
+		(device_no, kind, exhaust_money, current_money, current_bonus, current_charge, total_money, card_num, input_date)
+		VALUES (#{charger.device_no}, #{charger.kind}, #{charger.exhaust_money}, #{charger.current_money}, 
+		#{charger.current_bonus}, #{charger.current_charge}, #{charger.total_money}, #{charger.card_num}, #{charger.input_date})
+	</insert>
+	
+	<resultMap id="SelfStateVO" type="kr.gls.myapp.device.model.SelfStateVO">
+		<result property="device_addr" column="device_addr"/>
+		<result property="card_num" column="card_num"/>
+		<result property="self_time" column="self_time"/>
+		<result property="under_time" column="under_time"/>
+		<result property="foam_time" column="foam_time"/>
+		<result property="coating_time" column="coating_time"/>
+		<result property="use_cash" column="use_cash"/>
+		<result property="use_card" column="use_card"/>
+		<result property="remain_card" column="remain_card"/>
+		<result property="master_card" column="master_card"/>
+		<result property="start_time" column="start_time"/>
+		<result property="end_time" column="end_time"/>
+	</resultMap>
+	
+	<select id="selectSelfSales" resultType="String">
+		SELECT (SUM(use_cash) + SUM(use_card)) * 100 AS sales 
+		FROM gl_self_state 
+		<![CDATA[
+			WHERE date_format(end_time, "%Y-%m-%d") = CURDATE() AND device_addr = #{addr}
+		]]>
+	</select> 
+	
+	<resultMap id="AirStateVO" type="kr.gls.myapp.device.model.AirStateVO">
+		<result property="device_addr" column="device_addr"/>
+		<result property="card_num" column="card_num"/>
+		<result property="air_time" column="air_time"/>
+		<result property="air_cash" column="air_cash"/>
+		<result property="air_card" column="air_card"/>
+		<result property="remain_card" column="remain_card"/>
+		<result property="master_card" column="master_card"/>
+		<result property="start_time" column="start_time"/>
+		<result property="end_time" column="end_time"/>
+	</resultMap>
+	
+	<select id="selectAirSales" resultType="String">
+		SELECT (SUM(air_cash) + SUM(air_card)) * 100 AS sales 
+		FROM gl_air_state 
+		<![CDATA[
+			WHERE date_format(end_time, "%Y-%m-%d") = CURDATE() AND device_addr = #{addr}
+		]]>
+	</select> 
+	
+	<resultMap id="MateStateVO" type="kr.gls.myapp.device.model.MateStateVO">
+		<result property="device_addr" column="device_addr"/>
+		<result property="card_num" column="card_num"/>
+		<result property="mate_time" column="mate_time"/>
+		<result property="mate_cash" column="mate_cash"/>
+		<result property="mate_card" column="mate_card"/>
+		<result property="remain_card" column="remain_card"/>
+		<result property="master_card" column="master_card"/>
+		<result property="start_time" column="start_time"/>
+		<result property="end_time" column="end_time"/>
+	</resultMap>
+	
+	<select id="selectMateSales" resultType="String">
+		SELECT (SUM(mate_cash) + SUM(mate_card)) * 100 AS sales 
+		FROM gl_mate_state 
+		<![CDATA[
+			WHERE date_format(end_time, "%Y-%m-%d") = CURDATE() AND device_addr = #{addr}
+		]]>
+	</select> 
+	
+	<resultMap id="ReaderStateVO" type="kr.gls.myapp.device.model.ReaderStateVO">
+		<result property="device_addr" column="device_addr"/>
+		<result property="card_num" column="card_num"/>
+		<result property="reader_time" column="reader_time"/>
+		<result property="reader_cash" column="reader_cash"/>
+		<result property="reader_card" column="reader_card"/>
+		<result property="remain_card" column="remain_card"/>
+		<result property="master_card" column="master_card"/>
+		<result property="start_time" column="start_time"/>
+		<result property="end_time" column="end_time"/>
+	</resultMap>
+	
+	<select id="selectReaderSales" resultType="String">
+		SELECT (SUM(reader_cash) + SUM(reader_card)) * 100 AS sales 
+		FROM gl_reader_state 
+		<![CDATA[
+			WHERE date_format(end_time, "%Y-%m-%d") = CURDATE() AND device_addr = #{addr}
+		]]>
+	</select> 
+	
+	<!-- 실시간 모니터링 값 리턴 : 충전기 -->
+	<resultMap id="JsonChargerStateVO" type="kr.gls.myapp.device.model.JsonChargerStateVO">
+		<result property="device_type" column="device_type"/>
+		<result property="device_addr" column="device_addr"/>
+		<result property="connect" column="connect"/>
+		<result property="charge" column="charge"/>
+		<result property="count" column="count"/>
+	</resultMap>
+	
+	<select id="selectChargerMonitor" resultMap="JsonChargerStateVO">
+		SELECT SUM(current_charge) * 100 AS 'charge',
+		COUNT(case when `kind` = '0' then 1 END) AS 'count' 
+		FROM gl_charger_state
+		INNER JOIN gl_device_list 
+		ON gl_charger_state.`device_no` = gl_device_list.`no`
+		<![CDATA[ 
+			WHERE DATE_FORMAT(gl_charger_state.input_date, "%Y-%m-%d") = CURDATE()
+		]]> 
+		AND gl_device_list.`type` = #{type} 
+		AND gl_device_list.`addr` = #{addr}
+	</select>
+	
+	<resultMap id="SelfConfigVO" type="kr.gls.myapp.device.model.SelfConfigVO">	
+		<result property="device_addr" column="device_addr"/>
+		<result property="self_init_money" column="self_init_money"/>
+		<result property="self_init_time" column="self_init_time"/>
+		<result property="self_con_enable" column="self_con_enable"/>
+		<result property="self_con_money" column="self_con_money"/>
+		<result property="self_con_time" column="self_con_time"/>
+		<result property="self_pause_time" column="self_pause_time"/>
+		
+		<result property="foam_enable" column="foam_enable"/>
+		<result property="foam_con_enable" column="foam_con_enable"/>
+		<result property="foam_speedier" column="foam_speedier"/>
+		<result property="foam_init_money" column="foam_init_money"/>
+		<result property="foam_init_time" column="foam_init_time"/>
+		<result property="foam_con_money" column="foam_con_money"/>
+		<result property="foam_con_time" column="foam_con_time"/>
+		<result property="foam_pause_time" column="foam_pause_time"/>
+		<result property="foam_end_delay" column="foam_end_delay"/>
+		
+		<result property="under_enable" column="under_enable"/>
+		<result property="under_con_enable" column="under_con_enable"/>
+		<result property="under_speedier" column="under_speedier"/>
+		<result property="under_init_money" column="under_init_money"/>
+		<result property="under_init_time" column="under_init_time"/>
+		<result property="under_con_money" column="under_con_money"/>
+		<result property="under_con_time" column="under_con_time"/>
+		<result property="under_pause_time" column="under_pause_time"/>
+		
+		<result property="coating_enable" column="coating_enable"/>
+		<result property="coating_con_enable" column="coating_con_enable"/>
+		<result property="coating_speedier" column="coating_speedier"/>
+		<result property="coating_init_money" column="coating_init_money"/>
+		<result property="coating_init_time" column="coating_init_time"/>
+		<result property="coating_con_money" column="coating_con_money"/>
+		<result property="coating_con_time" column="coating_con_time"/>
+		<result property="coating_pause_time" column="coating_pause_time"/>
+		
+		<result property="cycle_money" column="cycle_money"/>
+		<result property="pay_free" column="pay_free"/>
+		<result property="buzzer_time" column="buzzer_time"/>
+		<result property="pause_count" column="pause_count"/>
+		<result property="secret_enable" column="secret_enable"/>
+		<result property="speedier_enable" column="speedier_enable"/>
+		<result property="secret_date" column="secret_date"/>
+		<result property="use_type" column="use_type"/>
+		<result property="set_coating_output" column="set_coating_output"/>
+		<result property="wipping_enable" column="wipping_enable"/>
+		<result property="wipping_temperature" column="wipping_temperature"/>
+		<result property="input_date" column="input_date"/>
+	</resultMap>
+	
+	<insert id="insertSelfConfig">
+		INSERT INTO gl_self_config 
+		(device_addr, self_init_money, self_init_time, self_con_enable, self_con_money, self_con_time, self_pause_time, 
+		foam_enable, foam_con_enable, foam_speedier, foam_init_money, foam_init_time, foam_con_money, foam_con_time, foam_pause_time, foam_end_delay,
+		under_enable, under_con_enable, under_speedier, under_init_money, under_init_time, under_con_money, under_con_time, under_pause_time,
+		coating_enable, coating_con_enable, coating_init_money, coating_init_time, coating_con_money, coating_con_time, coating_pause_time,
+		cycle_money, pay_free, buzzer_time, pause_count, secret_enable, speedier_enable, secret_date, use_type, 
+		set_coating_output, wipping_enable, wipping_temperature, input_date) 
+		VALUES (
+		#{self.device_addr}, #{self.self_init_money}, #{self.self_init_time}, #{self.self_con_enable}, #{self.self_con_money}, 
+		#{self.self_con_time}, #{self.self_pause_time}, #{self.foam_enable}, #{self.foam_con_enable}, 
+		#{self.foam_speedier}, #{self.foam_init_money}, #{self.foam_init_time}, #{self.foam_con_money},
+		#{self.foam_con_time}, #{self.foam_pause_time}, #{self.foam_end_delay},
+		#{self.under_enable}, #{self.under_con_enable}, #{self.under_speedier}, #{self.under_init_money}, 
+		#{self.under_init_time}, #{self.under_con_money}, #{self.under_con_time}, #{self.under_pause_time},
+		#{self.coating_enable}, #{self.coating_con_enable}, #{self.coating_init_money}, #{self.coating_init_time}, 
+		#{self.coating_con_money}, #{self.coating_con_time}, #{self.coating_pause_time},
+		#{self.cycle_money}, #{self.pay_free}, #{self.buzzer_time}, #{self.pause_count}, #{self.secret_enable}, 
+		#{self.speedier_enable}, #{self.secret_date}, #{self.use_type}, 
+		#{self.set_coating_output}, #{self.wipping_enable}, #{self.wipping_temperature}, #{date}
+		)
+	</insert>
+	
+	<resultMap id="ReaderConfigVO" type="kr.gls.myapp.device.model.ReaderConfigVO">
+		<result property="device_addr" column="device_addr"/>
+		<result property="reader_init_money" column="reader_init_money"/>
+		<result property="reader_con_money" column="reader_con_money"/>
+		<result property="reader_cycle_money" column="reader_cycle_money"/>
+		<result property="reader_con_enable" column="reader_con_enable"/>
+		<result property="reader_init_pulse" column="reader_init_pulse"/>
+		<result property="reader_con_pulse" column="reader_con_pulse"/>
+		<result property="reader_pulse_duty" column="reader_pulse_duty"/>
+		<result property="input_date" column="input_date"/>
+	</resultMap>
+	
+	<insert id="insertReaderConfig">
+		INSERT INTO gl_reader_config 
+		(device_addr, reader_init_money, reader_con_money, reader_cycle_money, reader_con_enable,
+		reader_init_pulse, reader_con_pulse, reader_pulse_duty, input_date)
+		VALUES(
+			#{reader.device_addr}, #{reader.reader_init_money}, #{reader.reader_con_money}, #{reader.reader_cycle_money}, 
+			#{reader.reader_con_enable}, #{reader.reader_init_pulse}, 
+			#{reader.reader_con_pulse}, #{reader.reader_pulse_duty}, #{date}
+		)
+	</insert>
+	
+	<update id="updateWashTotal">
+		UPDATE gl_wash_total 
+		SET cash = #{vo.cash}, card = #{vo.card}, master = #{vo.master}, version = #{vo.version} 
+		WHERE type = #{vo.type} AND addr = #{vo.addr}
+	</update>
+	
+	<select id="selectReaderConfig" resultMap="ReaderConfigVO">
+		SELECT * 
+		FROM gl_reader_config 
+		WHERE device_addr = #{addr} 
+		ORDER BY input_date DESC 
+		LIMIT 1
+	</select>
+	
+	<select id="selectSelfConfig" resultMap="SelfConfigVO">
+		SELECT * 
+		FROM gl_self_config 
+		WHERE device_addr = #{addr} 
+		ORDER BY input_date DESC 
+		LIMIT 1
+	</select>
+	
+	<resultMap id="ChargerConfigVO" type="kr.gls.myapp.device.model.ChargerConfigVO">
+		<result property="device_no" column="device_no" />
+		<result property="shop_no" column="shop_no" />
+		<result property="card_price" column="card_price" />
+		<result property="card_min_price" column="card_min_price" />
+		<result property="auto_charge_enable" column="auto_charge_enable" />
+		<result property="auto_charge_price" column="auto_charge_price" />
+		<result property="exhaust_charge_enable" column="exhaust_charge_enable" />
+		<result property="bonus1" column="bonus1" />
+		<result property="bonus2" column="bonus2" />
+		<result property="bonus3" column="bonus3" />
+		<result property="bonus4" column="bonus4" />
+		<result property="bonus5" column="bonus5" />
+		<result property="bonus6" column="bonus6" />
+		<result property="bonus7" column="bonus7" />
+		<result property="bonus8" column="bonus8" />
+		<result property="bonus9" column="bonus9" />
+		<result property="bonus10" column="bonus10" />
+		<result property="device_addr" column="device_addr" />
+	</resultMap>
+	
+	<select id="selectChargerConfig" resultMap="ChargerConfigVO">
+		SELECT device_no, shop_no, card_price, card_min_price, 
+		auto_charge_enable, auto_charge_price, exhaust_charge_enable, 
+		bonus1, bonus2, bonus3, bonus4, bonus5, bonus6, bonus7, bonus8, 
+		bonus9, bonus10, addr AS device_addr 
+		FROM gl_charger_config 
+		INNER JOIN gl_device_list ON gl_charger_config.`device_no` = gl_device_list.`no` 
+		INNER JOIN gl_charger_bonus ON gl_charger_config.`default_bonus_no` = gl_charger_bonus.`no` 
+		WHERE gl_device_list.type = #{type} AND gl_device_list.`addr`= #{addr} 
+		ORDER BY gl_charger_config.`input_date` DESC LIMIT 1
+	</select>
+	
+	<insert id="insertChargerConfig">
+		INSERT INTO gl_charger_config 
+		(device_no, card_price, card_min_price, auto_charge_price, auto_charge_enable, shop_no, input_date)
+		VALUES(
+			#{charger.device_no}, #{charger.card_price}, #{charger.card_min_price}, 
+			#{charger.auto_charge_price}, #{charger.auto_charge_enable}, #{charger.shop_no}, #{date}
+		)
+	</insert>
+	
+	<update id="updateChargerBonus">
+		UPDATE gl_charger_bonus 
+		SET bonus1 = #{charger.bonus1}, bonus2 = #{charger.bonus2}, bonus3 = #{charger.bonus3}, bonus4 = #{charger.bonus4}, 
+		bonus5 = #{charger.bonus5}, bonus6 = #{charger.bonus6}, bonus7 = #{charger.bonus7}, 
+		bonus8 = #{charger.bonus8}, bonus9 = #{charger.bonus9}, bonus10 = #{charger.bonus10}, input_date = #{date}
+		WHERE no = #{charger.device_no} 
+	</update>
+	
+	<select id="selectDeviceNo" resultType="String">
+		SELECT `no` 
+		FROM gl_device_list 
+		WHERE `type` = #{type} AND `addr` = #{addr}
+	</select>	
+	
+	<select id="selectShopNo" resultType="String">	
+		SELECT no 
+		FROM gl_shop_info
+	</select>
+	
+</mapper>
